@@ -60,6 +60,7 @@ public class Bird : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         baseRB.bodyType = RigidbodyType2D.Static;
+        state = State.Dead;
         if (onDied != null) onDied(this, EventArgs.Empty); 
     }
 

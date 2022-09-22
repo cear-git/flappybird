@@ -46,16 +46,15 @@ public class Level : MonoBehaviour
     }
     private void Start()
     {
-        Bird.getInstance().onDied += _onDied;
-        Bird.getInstance().onStart += _onStart;
+        Bird.getInstance().onDied += Bird_onDied;
+        Bird.getInstance().onStart += Bird_onStart;
     }
 
-    private void _onDied(object sender, System.EventArgs e)
+    private void Bird_onDied(object sender, System.EventArgs e)
     {
         state = State.Dead;
-        UnityEngine.SceneManagement.SceneManager.LoadScene("GameScene");
     }
-    private void _onStart(object sender, System.EventArgs e)
+    private void Bird_onStart(object sender, System.EventArgs e)
     {
         state = State.Playing;
     }
