@@ -1,18 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using System;
 
-public class Score : MonoBehaviour
+public static class Score
 {
-    private Text scoreText;
-    private void Awake()
+    public static int getHighscore()
     {
-        scoreText = transform.Find("scoreText").GetComponent<Text>();
+        return PlayerPrefs.GetInt("fbhighscore");
     }
 
-    private void Update()
+    public static bool trySetHighscore(int score)
     {
-        scoreText.text = Level.getInstance().getPipesPassed().ToString();
+        int current = getHighscore();
+        if (score > current)
+        {
+            PlayerPrefs.SetInt("fbhighscore", score);
+            PlayerPrefs.Save();
+            return true;
+        }
+        return false;
+
+    }
+
+    public static void resetHS()
+    {
+        PlayerPrefs.SetInt("fbhighscore", 0);
+        PlayerPrefs.Save();
     }
 }

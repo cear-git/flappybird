@@ -10,12 +10,18 @@ public class Level : MonoBehaviour
     private const float pipeSpeed = 30f;
     private const float pipeDestroyPos = -120f;
     private const float pipeSpawnPos = +120f;
+    private const float groundDestroyPos = -240f;
+    private const float cloudDestroyPos = -200f;
+    private const float cloudSpawnPos = +180f;
     private const float birdPos = 0f;
 
     private static Level instance;
     public static Level getInstance() { return instance; }
 
     private List<Pipe> pipeList;
+    private List<Transform> groundList;
+    private List<Transform> cloudList;
+    private float cloudSpawnTimer;
     private int pipesPassed;
     private int pipeIndex;
     private float pipeSpawnTimer;
@@ -40,6 +46,8 @@ public class Level : MonoBehaviour
     private void Awake()
     {
         instance = this;
+        spawnInitialGround();
+        spawnInitialClouds();
         pipeList = new List<Pipe>();
         state = State.Waiting;
         setDiff(Difficulty.Easy);
@@ -64,6 +72,78 @@ public class Level : MonoBehaviour
         if (state == State.Playing) {
             handleMovement();
             handlePipeSpawns();
+            handleGround();
+            handleClouds();
+        }
+    }
+
+    private void spawnInitialClouds()
+    {
+        cloudList = new List<Transform>();
+        Transform cloudT;
+        float cloudY = +30f;
+        cloudT = Instantiate(GameAssets.getInstance().pfClouds[Random.Range(0, 2)], new Vector3(cloudSpawnPos, cloudY, 0), Quaternion.identity);
+        cloudList.Add(cloudT);
+    }
+
+    private void handleClouds()
+    {
+        cloudSpawnTimer -= Time.deltaTime;
+        if (cloudSpawnTimer < 0)
+        {        
+            float cloudY = +30f;
+            cloudSpawnTimer = Random.Range(5, 7);
+            Transform cloudT = Instantiate(GameAssets.getInstance().pfClouds[Random.Range(0, 2)], new Vector3(cloudSpawnPos, cloudY, 0), Quaternion.identity);
+            cloudList.Add(cloudT);
+        }
+
+        for (int i = 0; i < cloudList.Count; i++) {
+            Transform cloudT = cloudList[i];
+            cloudT.position += new Vector3(-1, 0, 0) * pipeSpeed * Time.deltaTime * .85f;
+
+            if (cloudT.position.x < cloudDestroyPos)
+            {
+                Destroy(cloudT.gameObject);
+                cloudList.RemoveAt(i);
+                i--;
+            }
+        }
+    }
+
+    private void spawnInitialGround()
+    {
+        groundList = new List<Transform>();
+        Transform groundT;
+        float groundY = -47.9f;
+        float groundSpawn = 223.9f;
+        groundT = Instantiate(GameAssets.getInstance().pfGround, new Vector3(0, groundY, 0), Quaternion.identity);
+        groundList.Add(groundT);
+        groundT = Instantiate(GameAssets.getInstance().pfGround, new Vector3(groundSpawn, groundY, 0), Quaternion.identity);
+        groundList.Add(groundT);
+        groundT = Instantiate(GameAssets.getInstance().pfGround, new Vector3(groundSpawn * 2f, groundY, 0), Quaternion.identity);
+        groundList.Add(groundT);
+    }
+
+    private void handleGround()
+    {
+        foreach (Transform groundT in groundList)
+        {
+            groundT.position += new Vector3(-1, 0, 0) * pipeSpeed * Time.deltaTime;
+
+            if (groundT.position.x < groundDestroyPos)
+            {
+                float rightMostX = -120f;
+                for (int i = 0; i < groundList.Count; i++)
+                {
+                    if (groundList[i].position.x > rightMostX)
+                    {
+                        rightMostX = groundList[i].position.x;
+                    }
+                }
+
+                float groundWidth = 223.9f;
+                groundT.position = new Vector3(rightMostX + groundWidth, groundT.position.y, groundT.position.z);
+            }
         }
     }
 
@@ -92,6 +172,7 @@ public class Level : MonoBehaviour
             if (toRight && pipe.getPos() <= birdPos && pipe.isBottom())
             {
                 pipesPassed++;
+                SoundManager.Play(SoundManager.Sound.Score);
             }
             if (pipe.getPos() < pipeDestroyPos) { 
                 //destroy pipe and remove, minus an index so that it doesnt skip an index after being removed
@@ -113,19 +194,19 @@ public class Level : MonoBehaviour
         {
             case Difficulty.Easy:
                 gapSize = 50f;
-                pipeSpawnMax = 1.2f;
+                pipeSpawnMax = 1.4f;
                 break;
             case Difficulty.Medium:
                 gapSize = 40f;
-                pipeSpawnMax = 1.1f;
+                pipeSpawnMax = 1.2f;
                 break;
             case Difficulty.Hard:
                 gapSize = 34f;
-                pipeSpawnMax = 1f;
+                pipeSpawnMax = 1.1f;
                 break;
             case Difficulty.VeryHard:
                 gapSize = 25f;
-                pipeSpawnMax = .9f;
+                pipeSpawnMax = 1f;
                 break;
         }
     }
@@ -134,14 +215,11 @@ public class Level : MonoBehaviour
     {
         switch (pipeIndex)
         {
-            case >= 80:
-                Debug.Log("vhard");
+            case >= 50:
                 return Difficulty.VeryHard;
-            case >= 40:
-                Debug.Log("hard");
+            case >= 30:
                 return Difficulty.Hard;
-            case >= 20:
-                Debug.Log("medium");
+            case >= 10:
                 return Difficulty.Medium;
             default:
                 return Difficulty.Easy;
@@ -153,7 +231,6 @@ public class Level : MonoBehaviour
         createPipe(y - size * .5f, pos, true);
         createPipe(cameraSize * 2f - y - size * .5f, pos, false);
         pipeIndex++;
-        Debug.Log(pipeIndex.ToString());
         setDiff(getDiff());
     }
 

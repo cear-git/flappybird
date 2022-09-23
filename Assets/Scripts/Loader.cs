@@ -13,7 +13,8 @@ public static class Loader
     public enum Scene
     {
         GameScene,
-        Loading
+        Loading,
+        MainMenu
     }
 
     private static Scene targetScene;
